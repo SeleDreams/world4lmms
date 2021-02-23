@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 3.3)
+project(world4lmms)
+INCLUDE_DIRECTORIES(${FFTW3F_INCLUDE_DIRS})
+LINK_LIBRARIES(${FFTW3F_LIBRARIES})
+file(GLOB SRC src/*.c src/*.h)
+add_library(world4lmms ${SRC})
+set(WORLD4LMMS_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src PARENT_SCOPE)

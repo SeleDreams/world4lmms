@@ -799,7 +799,19 @@ void makeHeader(char *header, int samples, int fs, int nbit)
 // argv[12]
 // argv[13]
 
-int main(int argc, char *argv[])
+int World4UTAUMain(const char *inputFile,
+const char *outputFile,
+int note,
+double consonantVelocity,
+const char *flags,
+double input_offset,
+double scaledLength,
+double consonantLength,
+double cutoff,
+double intensity,
+double modulation,
+double tempo,
+const char *pitchbend)
 {
 	// メモリリーク検出
 	//内存泄漏检测
@@ -807,7 +819,7 @@ int main(int argc, char *argv[])
 	char buf[4096] = {0};
 	strcat(buf, "./world4utau");
 	int ii = 1;
-	while (ii < argc)
+	/*while (ii < argc)
 	{
 		strcat(buf, " '");
 		strcat(buf, argv[ii]);
@@ -820,7 +832,7 @@ int main(int argc, char *argv[])
 	{
 		log_err("error: missing params.");
 		return 0;
-	}
+	}*/
 
 	PROFILER_START(total);
 
@@ -828,10 +840,7 @@ int main(int argc, char *argv[])
 	FILE *fp;
 	int fs, nbit = 16;
 	int flag_G = 0;
-	if (argc > 5)
-	{
-		flag_G = strchr(argv[5], 'G') != 0;
-	}
+	flag_G = strchr(flags, 'G') != 0;
 
 	double *x = 0, *f0 = NULL, *t = NULL, *y = NULL;
 	double **specgram = NULL;
@@ -841,14 +850,14 @@ int main(int argc, char *argv[])
 	int signalLen = 0;
 	int tLen = 0;
 
-	tLen = readDIOParam(argv[1], &t, &f0, &fs, &signalLen);
+	tLen = readDIOParam(inputFile, &t, &f0, &fs, &signalLen);
 	if (tLen != 0)
 	{
 		fftl = getFFTLengthForStar(fs);
-		specgram = readSTARParam(signalLen, fs, argv[1], tLen, fftl);
+		specgram = readSTARParam(signalLen, fs, inputFile, tLen, fftl);
 		if (specgram)
 		{
-			residualSpecgram = readPlatinumParam(signalLen, fs, argv[1], tLen, fftl);
+			residualSpecgram = readPlatinumParam(signalLen, fs, inputFile, tLen, fftl);
 			if (!residualSpecgram)
 			{
 				tLen = 0;
@@ -866,7 +875,7 @@ int main(int argc, char *argv[])
 		freeSpecgram(specgram, tLen);
 		freeSpecgram(residualSpecgram, tLen);
 
-		x = wavread(argv[1], &fs, &nbit, &signalLen);
+		x = wavread(inputFile, &fs, &nbit, &signalLen);
 		if (x == NULL)
 		{
 			log_err("error: 指定されたファイルは存在しません．"); // 指定的文件不存在
@@ -875,7 +884,7 @@ int main(int argc, char *argv[])
 		tLen = getDIOParam(x, signalLen, fs, FRAMEPERIOD, &t, &f0);
 		if (tLen != 0)
 		{
-			writeDIOParam(signalLen, fs, tLen, argv[1], t, f0);
+			writeDIOParam(signalLen, fs, tLen, inputFile, t, f0);
 		}
 		else
 		{
@@ -895,7 +904,7 @@ int main(int argc, char *argv[])
 		}
 		else
 		{
-			writeSTARParam(signalLen, fs, argv[1], specgram, tLen, fftl);
+			writeSTARParam(signalLen, fs, inputFile, specgram, tLen, fftl);
 		}
 		residualSpecgram = getPlatinumParam(x, signalLen, fs, t, f0, specgram, tLen, fftl);
 		if (!residualSpecgram)
@@ -909,7 +918,7 @@ int main(int argc, char *argv[])
 		}
 		else
 		{
-			writePlatinumParam(signalLen, fs, argv[1], residualSpecgram, tLen, fftl);
+			writePlatinumParam(signalLen, fs, inputFile, residualSpecgram, tLen, fftl);
 		}
 	}
 
@@ -919,40 +928,15 @@ int main(int argc, char *argv[])
 
 	//引数を取り込む
 	//接受参数
-	double offset = 0;
+	double offset = input_offset;
 	double wavelength = (double)signalLen / (double)fs * 1000; //音源の長さをmsecにする  将声源长度设置为毫秒
-	double length_req = wavelength;							   //初期値いれとく  初始值
-	double fixed = 0;
-	double blank = 0;
+	double length_req = scaledLength;							   //初期値いれとく  初始值
+	double fixed = consonantLength;
+	double blank = cutoff;
 	double *target_freqs = NULL;
 	double velocity = 1.0;
-	double value = 100;
-	if (argc > 4)
-	{
-		sscanf(argv[4], "%lf", &value);
-	}
+	double value = consonantVelocity;
 	velocity = pow(2, value / 100 - 1.0);
-
-	if (argc > 6)
-	{
-		sscanf(argv[6], "%lf", &offset);
-	}
-
-	if (argc > 7)
-	{
-		sscanf(argv[7], "%lf", &length_req);
-	}
-
-	if (argc > 8)
-	{
-		sscanf(argv[8], "%lf", &fixed);
-	}
-
-	if (argc > 9)
-	{
-		sscanf(argv[9], "%lf", &blank);
-	}
-
 
 	log_debug("Parameters");
 	log_debug("velocity      :%lf", velocity);
@@ -1018,26 +1002,13 @@ int main(int argc, char *argv[])
 	// FIXME: what does this mean?? [ruix]
 	int flag_t = 0;
 	char *cp;
-	if (argc > 5 && (cp = strchr(argv[5], 't')) != 0)
+	if (cp = strchr(flags, 't'))
 	{
 		sscanf(cp + 1, "%d", &flag_t);
 	}
+	double volume = intensity;
 
-	double modulation = 100;
-	if (argc > 11)
-	{
-		sscanf(argv[11], "%lf", &modulation);
-	}
-
-	double volume = 1.0;
-	if (argc > 10)
-	{
-		volume = 100;
-		sscanf(argv[10], "%lf", &volume);
-		volume *= 0.01;
-	}
-
-	double target_freq = name2freq(argv[3], flag_t);
+	double target_freq = name2freq(pitchbend, flag_t);
 	double freq_avg = getFreqAvg(f0, tLen);
 
 	log_debug("volume        :%lf", volume);
@@ -1049,24 +1020,13 @@ int main(int argc, char *argv[])
 	memset(f0out, 0, sizeof(double) * oLen);
 	//double *tout = (double*)malloc(oLen * sizeof(double));
 	int *pit = NULL;
-	double tempo = 120;
 	int pLen = oLen;
 	int pStep = 256;
-	if (argc > 13)
-	{
-		cp = argv[12];
-		sscanf(cp + 1, "%lf", &tempo);
-		pStep = (int)(60.0 / 96.0 / tempo * fs + 0.5);
-		pLen = outSamples / pStep + 1;
-		pit = (int *)malloc((pLen + 1) * sizeof(int));
-		memset(pit, 0, (pLen + 1) * sizeof(int));
-		decpit(argv[13], pit, pLen);
-	}
-	else
-	{
-		pit = (int *)malloc((pLen + 1) * sizeof(int));
-		memset(pit, 0, (pLen + 1) * sizeof(int));
-	}
+    pStep = (int)(60.0 / 96.0 / tempo * fs + 0.5);
+    pLen = outSamples / pStep + 1;
+    pit = (int *)malloc((pLen + 1) * sizeof(int));
+    memset(pit, 0, (pLen + 1) * sizeof(int));
+    decpit(pitchbend, pit, pLen);
 
 	double **specgram_out = (double **)malloc(sizeof(double *) * oLen);
 	double **residualSpecgram_out = (double **)malloc(sizeof(double *) * oLen);
@@ -1204,7 +1164,7 @@ int main(int argc, char *argv[])
 	// スペクトル伸縮
 	// 光谱拉伸
 	//stretchSpectrum(double **specgram, double ratio)
-	if (argc > 5 && (cp = strchr(argv[5], 'g')) != 0)
+	if (cp = strchr(flags, 'g') != 0)
 	{
 		double w = 0;
 		double ratio = 1.0;
@@ -1253,9 +1213,7 @@ int main(int argc, char *argv[])
 		}
 	}
 	value = 0.86;
-	if (argc > 5)
-	{
-		cp = strchr(argv[5], 'P');
+		cp = strchr(flags, 'P');
 		if (cp)
 		{
 			sscanf(cp + 1, "%lf", &value);
@@ -1265,7 +1223,6 @@ int main(int argc, char *argv[])
 				value = 100;
 			value *= 0.01;
 		}
-	}
 	double peekcomp = 32.0 * pow(512.0 / maxAmp, value);
 	//double peekcomp = pow( 16384.0 / maxAmp, value);
 	for (i = 0; i < outSamples; i++)
@@ -1281,10 +1238,10 @@ int main(int argc, char *argv[])
 		output[i] = (short)value;
 	}
 
-	fp = fopen(argv[1], "rb");
+	fp = fopen(inputFile, "rb");
 	makeHeader(header, outSamples, fs, nbit);
 
-	fp = fopen(argv[2], "wb");
+	fp = fopen(outputFile, "wb");
 	fwrite(header, sizeof(char), 44, fp);
 	fwrite(output, sizeof(short), outSamples, fp);
 	fclose(fp);

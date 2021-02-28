@@ -50,4 +50,17 @@
 #include "timer.h"
 #include "log.h"
 
+int World4UTAUMain(const char *inputFile,
+                   const char *outputFile,
+                   int note,
+                   double consonantVelocity,
+                   const char *flags,
+                   double input_offset,
+                   double scaledLength,
+                   double consonantLength,
+                   double cutoff,
+                   double intensity,
+                   double modulation,
+                   double tempo,
+                   const char *pitchbend);
 #endif

@@ -635,7 +635,19 @@ int generateParams(const char *wavfile)
     return 0;
 }
 
-int main(int argc, char *argv[])
+int WORLD4UTAU_RESAMPLER_PROCESS(const char *inputFile,
+                                 const char *outputFile,
+                                 int note,
+                                 double consonantVelocity,
+                                 const char *flags,
+                                 double offset,
+                                 double scaledLength,
+                                 double consonantLength,
+                                 double cutoff,
+                                 double intensity,
+                                 double modulation,
+                                 double tempo,
+                                 double *pitchbend)
 {
     printf("./tool");
 
@@ -653,11 +665,11 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    DIR *d = opendir(argv[1]);
+    DIR *d = opendir(inputFile);
     struct dirent *entry = NULL;
     if (!d)
     {
-        printf("open dir [%s] failed.\n", argv[1]);
+        printf("open dir [%s] failed.\n", inputFile);
         return -1;
     }
     else
@@ -680,7 +692,7 @@ int main(int argc, char *argv[])
                     printf("list file [%s]\n", entry->d_name);
                     char path[4096] = {0};
                     char tmp[1024] = {0};
-                    sprintf(tmp, "%s/%s", argv[1], entry->d_name);
+                    sprintf(tmp, "%s/%s", inputFile, entry->d_name);
                     char * real = realpath(tmp, path);
                     generateParams(real);
                     printf("list file [%s]\n", real);

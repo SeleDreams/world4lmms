@@ -49,10 +49,12 @@
 #include "common.h"
 #include "timer.h"
 #include "log.h"
-
+#ifdef __cplusplus
+extern "C"{
+#endif
 int World4UTAUMain(const char *inputFile,
                    const char *outputFile,
-                   int note,
+                   const char* note,
                    double consonantVelocity,
                    const char *flags,
                    double input_offset,
@@ -63,4 +65,8 @@ int World4UTAUMain(const char *inputFile,
                    double modulation,
                    double tempo,
                    const char *pitchbend);
+
+#ifdef __cplusplus
+}
+#endif
 #endif

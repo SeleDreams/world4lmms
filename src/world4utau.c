@@ -801,7 +801,7 @@ void makeHeader(char *header, int samples, int fs, int nbit)
 
 int World4UTAUMain(const char *inputFile,
 const char *outputFile,
-int note,
+const char *note,
 double consonantVelocity,
 const char *flags,
 double input_offset,
@@ -816,23 +816,7 @@ const char *pitchbend)
 	// メモリリーク検出
 	//内存泄漏检测
 	// _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
-	char buf[4096] = {0};
-	strcat(buf, "./world4utau");
 	int ii = 1;
-	/*while (ii < argc)
-	{
-		strcat(buf, " '");
-		strcat(buf, argv[ii]);
-		strcat(buf, "'");
-		ii++;
-	}
-	log_info("%s", buf);
-
-	if (argc <= 4)
-	{
-		log_err("error: missing params.");
-		return 0;
-	}*/
 
 	PROFILER_START(total);
 
@@ -933,7 +917,6 @@ const char *pitchbend)
 	double length_req = scaledLength;							   //初期値いれとく  初始值
 	double fixed = consonantLength;
 	double blank = cutoff;
-	double *target_freqs = NULL;
 	double velocity = 1.0;
 	double value = consonantVelocity;
 	velocity = pow(2, value / 100 - 1.0);
@@ -1008,7 +991,7 @@ const char *pitchbend)
 	}
 	double volume = intensity;
 
-	double target_freq = name2freq(pitchbend, flag_t);
+	double target_freq = name2freq(note, flag_t);
 	double freq_avg = getFreqAvg(f0, tLen);
 
 	log_debug("volume        :%lf", volume);
